@@ -1,8 +1,8 @@
 from pylab import *
 from matplotlib import *
 
-def my_specgram(x, NFFT=256, Fs=2, Fc=0, detrend=mlab.detrend_none,
-             window=mlab.window_hanning, noverlap=128,
+def my_specgram(x, NFFT=10, Fs=2, Fc=0, detrend=mlab.detrend_none,
+             window=mlab.window_hanning, noverlap=5,
              cmap=None, xextent=None, pad_to=None, sides='default',
              scale_by_freq=None, minfreq = None, maxfreq = None, **kwargs):
     """

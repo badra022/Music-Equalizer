@@ -5,15 +5,20 @@ import numpy as np
 from scipy.io.wavfile import write
 from spectrogram import my_specgram
 import winsound
+import math
+
+midColor = [(0, 182, 188, 255), (128, 128, 128, 255),  (0, 128, 128, 255), (230,0,115, 255), (204, 0, 0, 255)]
+maxColor = [(246, 111, 0, 255), (0, 0, 0, 255), (230, 230, 0, 255), (0,0,0, 255), (0, 0, 0, 255)]
+minColor = [(75, 0, 113, 255), (255, 255, 255, 255), (102, 0, 34, 255), (255,255,255, 255), (255,255,255, 255)]
+
 class signal(object):
     timer = QtCore.QTimer()
     speedFactor = 3000
 
-    def __init__(self, data, fs, widget, windowNumber):
+    def __init__(self, data, fs, widget):
         self.amplitude = np.int32((data))
         self.fs = fs
         self.fmax = fs/2
-        self.windowNumber = windowNumber
         self.maxAmplitude = self.amplitude.max()
         self.minAmplitude = self.amplitude.min()
         self.zoomFactor = 1
@@ -70,16 +75,14 @@ class signal(object):
         
     def getFigure(self):
         fig = plt.figure(figsize=(10, 5))
-        plt.plot(self.time[self.startTimeIdx], self.time[self.endTimeIdx],self.amplitude[self.startTimeIdx], self.time[self.endTimeIdx])
+        plt.plot(self.time[self.startTimeIdx:self.endTimeIdx],self.amplitude[self.startTimeIdx:self.endTimeIdx])
         plt.xlabel('time (sec)')
         plt.ylabel('amplitude (mv)')
         return fig
     
-    def getSpectrogram(self, minfreq, maxfreq, cmap):
+    def getSpectrogram(self, cmap):
         fig = plt.figure(figsize=(10, 5))
-        powerSpectrum, freqenciesFound, time, _ = my_specgram(self.amplitude[int(self.startTimeIdx) : int(self.endTimeIdx)], Fs=self.fs,
-         cmap=cmap, maxfreq=maxfreq, minfreq=minfreq)
-        plt.pcolormesh(time, freqenciesFound, powerSpectrum, cmap=cmap)
+        plt.specgram(self.amplitude,  Fs=self.fs, cmap = cmap)
         plt.xlabel('time (sec)')
         plt.ylabel('frequency (Hz)')
         plt.colorbar()
@@ -87,24 +90,32 @@ class signal(object):
 
     def initSpectrogram(self, imageItem, hist):
         # Scale the X and Y Axis to time and frequency (standard is pixels)
-        imageItem.scale(self.time[-1]/np.size(self.powerSpectrum, axis=1),
-        self.freqenciesFound[-1]/np.size(self.powerSpectrum, axis=0))
-        hist.gradient.restoreState({'mode': 'rgb',
-                                    'ticks': [(0.5, (0, 182, 188, 255)),
-                                            (1.0, (246, 111, 0, 255)),
-                                            (0.0, (75, 0, 113, 255))]})
+        imageItem.scale(self.time[-1]/np.size(self.powerSpectrum, axis=1), math.pi)
+        self.setSpectrogramColor(hist, 0)
+        # hist.gradient.restoreState({'mode': 'rgb',
+        #                             'ticks': [(0.5, (0, 182, 188, 255)),
+        #                                     (1.0, (246, 111, 0, 255)),
+        #                                     (0.0, (75, 0, 113, 255))]})
+        # hist.gradient.saveState()
+    
+    def setSpectrogramColor(self, hist, slidervalue):
+        hist.gradient.restoreState({'mode': 'rgb','ticks': [(0.5, midColor[slidervalue]),(1.0, maxColor[slidervalue]),(0.0, minColor[slidervalue])]})
         hist.gradient.saveState()
 
-    def plotSpectrogram(self, minfreq, maxfreq, imageItem, hist):
-        self.powerSpectrum, self.freqenciesFound, _, _ = my_specgram(self.amplitude[int(self.startTimeIdx) : int(self.endTimeIdx)],
-         Fs=self.fs, maxfreq=maxfreq, minfreq=minfreq)
+    def plotSpectrogram(self, imageItem):
+        self.powerSpectrum, self.freqenciesFound, _, _ = my_specgram(self.amplitude[self.startTimeIdx: self.endTimeIdx], Fs=self.fs)
         # for more colormaps: https://matplotlib.org/2.0.2/examples/color/colormaps_reference.html
-        # Fit the min and max levels of the histogram to the data available
-        hist.setLevels(np.min(self.powerSpectrum), np.max(self.powerSpectrum))
         # Sxx contains the amplitude for each pixel
         imageItem.setImage(self.powerSpectrum)
+    
+    def moveSpectrogram(self, minIntensity, maxIntensity, plotItem, hist):
+        # Fit the min and max levels of the histogram to the data available
+        min = np.min(self.powerSpectrum)
+        max = np.max(self.powerSpectrum)
+        hist.setLevels(min + (max - min) * minIntensity, max * maxIntensity)
+        plotItem.setXRange(self.time[self.startTimeIdx], self.time[self.endTimeIdx])
 
     def listen(self):
-        winsound.PlaySound("output_sound" + str(self.windowNumber) + ".wav", winsound.SND_ASYNC)
+        winsound.PlaySound("output_sound.wav", winsound.SND_ASYNC)
     def save(self):
-        write("output_sound" + str(self.windowNumber) + ".wav", self.fs, self.amplitude.astype(np.int16))
+        write("output_sound.wav", self.fs, self.amplitude.astype(np.int16))
