@@ -117,7 +117,6 @@ class Ui_MainWindow(object):
             slider.setOrientation(QtCore.Qt.Vertical)
             self.horizontalLayout.addWidget(slider)
 
-        self.verticalLayout_2.addLayout(self.horizontalLayout)
         self.verticalLayout_4 = QtWidgets.QVBoxLayout()
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.max_slider = QtWidgets.QSlider(self.widget)

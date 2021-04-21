@@ -34,8 +34,11 @@ MIN_SLIDER_IDX = 11
 
 # class definition for application window components like the ui
 class ApplicationWindow(QtWidgets.QMainWindow):
+    windowsNumber = 0
     def __init__(self):
         super(ApplicationWindow, self).__init__()
+        self.__class__.windowsNumber = self.__class__.windowsNumber + 1
+        print("---------BEFORE SETTING WINDOW GUI-----------")
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.pallet.addItem("plasma")
@@ -43,72 +46,65 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.pallet.addItem("viridis")
         self.ui.pallet.addItem("magma")
         self.ui.pallet.addItem("inferno")
+        self.cmap = "plasma"
         self.ui.pallet.activated[str].connect(self.changepallet)  
         self.inputSignal = False
         self.outputSignal = False
-        signal.timer.start()
+        # signal.timer.start()
         self.ui.open.triggered.connect(self.open)
         self.ui.save.triggered.connect(self.saveAs)
         self.ui.zoomIn.clicked.connect(self.zoomIn)
         self.ui.zoomOut.clicked.connect(self.zoomOut)
         # signal.timer.timeout.connect(self.moveSignals)
         self.slidervalues = np.ones((10,), dtype =float)
-        self.ui.sliders[0].sliderReleased.connect(lambda: self.process(0))
-        self.ui.sliders[1].sliderReleased.connect(lambda: self.process(1))
-        self.ui.sliders[2].sliderReleased.connect(lambda: self.process(2))
-        self.ui.sliders[3].sliderReleased.connect(lambda: self.process(3))
-        self.ui.sliders[4].sliderReleased.connect(lambda: self.process(4))
-        self.ui.sliders[5].sliderReleased.connect(lambda: self.process(5))
-        self.ui.sliders[6].sliderReleased.connect(lambda: self.process(6))
-        self.ui.sliders[7].sliderReleased.connect(lambda: self.process(7))
-        self.ui.sliders[8].sliderReleased.connect(lambda: self.process(8))
-        self.ui.sliders[9].sliderReleased.connect(lambda: self.process(9))
-        self.ui.max_slider.sliderReleased.connect(lambda: self.process(MAX_SLIDER_IDX))
-        self.ui.min_slider.sliderReleased.connect(lambda: self.process(MIN_SLIDER_IDX))
+        for slider in self.ui.sliders:
+            slider.sliderReleased.connect(self.equalizeSignal)
+        self.ui.max_slider.sliderReleased.connect(self.adjustSpectrogram)
+        self.ui.min_slider.sliderReleased.connect(self.adjustSpectrogram)
         self.ui.scroll.sliderReleased.connect(self.scrollView)
-        self.cmap = 'plasma'
+
+    def __del__(self):
+        self.__class__.windowsNumber = self.__class__.windowsNumber - 1
+
 
     def zoomOut(self):
         self.inputSignal.zoomOut()
         self.outputSignal.zoomOut()
-        self.outputSignal.plotSpectrogram(cmap = "plasma", minfreq = self.min_freq ,
+        self.outputSignal.plotSpectrogram(minfreq = self.min_freq ,
             maxfreq = self.max_freq, imageItem = self.ui.output_spectrogram, hist = self.ui.hist)
 
     def zoomIn(self):
         self.inputSignal.zoomIn()
         self.outputSignal.zoomIn()
-        self.outputSignal.plotSpectrogram(cmap = "plasma", minfreq = self.min_freq ,
+        self.outputSignal.plotSpectrogram(minfreq = self.min_freq ,
             maxfreq = self.max_freq, imageItem = self.ui.output_spectrogram, hist = self.ui.hist)
 
     def scrollView(self):
         slidervalue = self.ui.scroll.value()
         self.inputSignal.scrollSignal(slidervalue)
         self.outputSignal.scrollSignal(slidervalue)
-        self.outputSignal.plotSpectrogram(cmap = "plasma", minfreq = self.min_freq ,
+        self.outputSignal.plotSpectrogram(minfreq = self.min_freq ,
             maxfreq = self.max_freq, imageItem = self.ui.output_spectrogram, hist = self.ui.hist)
 
-    def process(self, idx):
+    def equalizeSignal(self):
+        idx = 0
+        for slider in self.ui.sliders:
+            self.slidervalues[idx] = slider.value()/ 20
+            idx = idx + 1
+        self.outputSignal.updateSignal(processFrequencyBand(self.inputSignal.amplitude, self.inputSignal.fs,self.slidervalues))
+        self.outputSignal.plotSpectrogram(minfreq = self.min_freq , maxfreq = self.max_freq,
+                                 imageItem = self.ui.output_spectrogram, hist = self.ui.hist)
+
+    def adjustSpectrogram(self):
         if self.inputSignal and self.outputSignal:
-            if idx == MAX_SLIDER_IDX:
-                self.max_freq = (self.ui.max_slider.value()/100) * (self.outputSignal.fs / 2)
-                self.outputSignal.plotSpectrogram(cmap = "plasma", minfreq = self.min_freq ,
-                 maxfreq = self.max_freq, imageItem = self.ui.output_spectrogram, hist = self.ui.hist)
-            elif idx == MIN_SLIDER_IDX:
-                self.min_freq = (self.ui.min_slider.value()/100) * (self.outputSignal.fs / 2)
-                print("min frequency: ", self.min_freq)
-                self.outputSignal.plotSpectrogram(cmap = "plasma", minfreq = self.min_freq ,
-                 maxfreq = self.max_freq, imageItem = self.ui.output_spectrogram, hist = self.ui.hist)
-            else:
-                factor = self.ui.sliders[idx].value() / 20
-                self.slidervalues[idx] = factor
-                print("factor ", factor, "On slider ",idx)
-                del self.outputSignal
-                self.outputSignal = signal(processFrequencyBand(self.inputSignal.amplitude, self.inputSignal.fs,self.slidervalues), self.inputSignal.fs, self.ui.output_signal)
-                self.outputSignal.plotSpectrogram(cmap = "plasma", minfreq = self.min_freq ,
-                 maxfreq = self.max_freq, imageItem = self.ui.output_spectrogram, hist = self.ui.hist)
+            self.max_freq = (self.ui.max_slider.value()/100) * (self.outputSignal.fs / 2)
+            self.min_freq = (self.ui.min_slider.value()/100) * (self.outputSignal.fs / 2)
+            self.outputSignal.plotSpectrogram(minfreq = self.min_freq ,
+                maxfreq = self.max_freq, imageItem = self.ui.output_spectrogram, hist = self.ui.hist)
 
     def open(self):
         if self.inputSignal:
+            print("----------CALL CHILD-----------")
             child_window()
         else:
             files_name = QtGui.QFileDialog.getOpenFileName( self, 'Open only wav', os.getenv('HOME') ,"wav(*.wav)" )
@@ -116,16 +112,12 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
             if pathlib.Path(path).suffix == ".wav":
                 samplerate, data = wavfile.read(path)
-                self.inputSignal = signal(data, samplerate, self.ui.input_signal)
-                self.outputSignal = signal(data, samplerate, self.ui.output_signal)
+                self.inputSignal = signal(data, samplerate, self.ui.input_signal, self.__class__.windowsNumber)
+                self.outputSignal = signal(data, samplerate, self.ui.output_signal, self.__class__.windowsNumber)   
                 self.max_freq = (self.ui.max_slider.value()/100) * (self.outputSignal.fs / 2)
                 self.min_freq = (self.ui.min_slider.value()/100) * (self.outputSignal.fs / 2)
-                self.changepallet("plasma")
-
-                powerSpectrum, time, frequencies = self.outputSignal.plotSpectrogram('plasma', self.min_freq, self.max_freq, self.ui.output_spectrogram, self.ui.hist)
-                # Scale the X and Y Axis to time and frequency (standard is pixels)
-                self.ui.output_spectrogram.scale(time[-1]/np.size(powerSpectrum, axis=1),
-                frequencies[-1]/np.size(powerSpectrum, axis=0))
+                self.outputSignal.plotSpectrogram(self.min_freq, self.max_freq, self.ui.output_spectrogram, self.ui.hist)
+                self.outputSignal.initSpectrogram(self.ui.output_spectrogram, self.ui.hist)
 
     def moveSignals(self):
         if self.inputSignal:
@@ -192,6 +184,7 @@ def window():
     sys.exit(app.exec_())
 
 def child_window():
+    print("---------------CREATE INST--------------")
     win = ApplicationWindow()
     win.show()
 

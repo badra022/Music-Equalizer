@@ -1,13 +1,7 @@
-from librosa import display
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fft import rfft, rfftfreq, irfft
-from IPython.display import Audio
-from scipy.io import wavfile
-from scipy.io.wavfile import write
 import cmath
-from spectrogram import my_specgram
-
 
 def processFrequencyBand(data, fs,factors):
     # Number of samples in signal
