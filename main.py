@@ -16,15 +16,11 @@ import sys
 from gui import Ui_MainWindow
 import os
 from matplotlib.backends.backend_pdf import PdfPages
-from librosa import display
-import librosa
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy 
-from IPython.display import Audio
-from scipy.io.wavfile import write
-from scipy.io import wavfile
 from classes import signal
+from scipy.io import wavfile
 import pathlib
 from processfunc import processFrequencyBand
 
@@ -33,10 +29,10 @@ cmaps = ['plasma', 'Greys', 'viridis', 'magma', 'inferno']
 
 # class definition for application window components like the ui
 class ApplicationWindow(QtWidgets.QMainWindow):
-    # windowsNumber = 0
+    windowsNumber = 0
     def __init__(self):
         super(ApplicationWindow, self).__init__()
-        # self.__class__.windowsNumber = self.__class__.windowsNumber + 1
+        self.__class__.windowsNumber = self.__class__.windowsNumber + 1
         # print("---------BEFORE SETTING WINDOW GUI-----------")
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -44,7 +40,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.pallet.sliderReleased.connect(self.setSpectrogramColor)
         self.inputSignal = False
         self.outputSignal = False
-        # signal.timer.start()
+        signal.timer.start()
         self.ui.open.triggered.connect(self.open)
         self.ui.save.triggered.connect(self.saveAs)
         self.ui.zoomIn.clicked.connect(self.zoomIn)
@@ -79,7 +75,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.outputSignal.plotSpectrogram(self.ui.output_spectrogram)
         self.outputSignal.moveSpectrogram(self.min_intensity, self.max_intensity, self.ui.SpectrogramPlotItem, self.ui.hist)
 
-
     def equalizeSignal(self):
         if self.inputSignal and self.outputSignal:
             idx = 0
@@ -106,8 +101,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
             if pathlib.Path(path).suffix == ".wav":
                 samplerate, data = wavfile.read(path)
-                self.inputSignal = signal(data, samplerate, self.ui.input_signal)
-                self.outputSignal = signal(data, samplerate, self.ui.output_signal)   
+                self.inputSignal = signal(data, samplerate, self.ui.input_signal, self.__class__.windowsNumber)
+                self.outputSignal = signal(data, samplerate, self.ui.output_signal, self.__class__.windowsNumber)   
                 self.max_intensity = (self.ui.max_slider.value()/1000)
                 self.min_intensity = (self.ui.min_slider.value()/1000)
                 self.outputSignal.plotSpectrogram(self.ui.output_spectrogram)
@@ -123,7 +118,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def saveAs(self):
         if self.inputSignal and self.outputSignal:
-            report = PdfPages('report.pdf')
+            report = PdfPages('report' + str(self.__class__.windowsNumber) + '.pdf')
             report.savefig(self.inputSignal.getFigure())
             report.savefig(self.outputSignal.getFigure())
             report.savefig(self.inputSignal.getSpectrogram(self.cmap))
@@ -142,7 +137,7 @@ def window():
     sys.exit(app.exec_())
 
 def child_window():
-    # print("---------------CREATE INST--------------")
+    global win
     win = ApplicationWindow()
     win.show()
 

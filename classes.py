@@ -15,7 +15,7 @@ class signal(object):
     timer = QtCore.QTimer()
     speedFactor = 3000
 
-    def __init__(self, data, fs, widget):
+    def __init__(self, data, fs, widget, winNumber):
         self.amplitude = np.int32((data))
         self.fs = fs
         self.fmax = fs/2
@@ -28,14 +28,16 @@ class signal(object):
         self.endTimeIdx = int(fs * self.zoomFactor) - 1
         self.__class__.timer.setInterval(200) # m     interval
         self.widget = widget
+        self.winNumber = winNumber
         self.plot()
-        # self.listen()
+        self.listen()
 
     def updateSignal(self, data):
         self.amplitude = np.int32((data))
         self.time = np.linspace(0., len(data)/self.fs, len(data))
         self.plot()
         self.save()
+        self.listen()
         
     def plot(self):
         self.maxAmplitude = self.amplitude.max()
@@ -90,15 +92,10 @@ class signal(object):
 
     def initSpectrogram(self, imageItem, hist):
         # Scale the X and Y Axis to time and frequency (standard is pixels)
-        imageItem.scale(self.time[-1]/np.size(self.powerSpectrum, axis=1), math.pi)
+        imageItem.scale(self.time[-1]/np.size(self.powerSpectrum, axis=1), math.pi/np.size(self.powerSpectrum, axis=0))
         self.setSpectrogramColor(hist, 0)
-        # hist.gradient.restoreState({'mode': 'rgb',
-        #                             'ticks': [(0.5, (0, 182, 188, 255)),
-        #                                     (1.0, (246, 111, 0, 255)),
-        #                                     (0.0, (75, 0, 113, 255))]})
-        # hist.gradient.saveState()
     
-    def setSpectrogramColor(self, hist, slidervalue):
+    def setSpectrogramColor(self, hist, slidervalue): # slidervalue -> 0: 4
         hist.gradient.restoreState({'mode': 'rgb','ticks': [(0.5, midColor[slidervalue]),(1.0, maxColor[slidervalue]),(0.0, minColor[slidervalue])]})
         hist.gradient.saveState()
 
@@ -116,6 +113,6 @@ class signal(object):
         plotItem.setXRange(self.time[self.startTimeIdx], self.time[self.endTimeIdx])
 
     def listen(self):
-        winsound.PlaySound("output_sound.wav", winsound.SND_ASYNC)
+        winsound.PlaySound("output_sound" + str(self.winNumber) + ".wav", winsound.SND_ASYNC)
     def save(self):
-        write("output_sound.wav", self.fs, self.amplitude.astype(np.int16))
+        write("output_sound" + str(self.winNumber) + ".wav", self.fs, self.amplitude.astype(np.int16))
