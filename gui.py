@@ -117,12 +117,8 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addWidget(self.max_slider)
 
-        self.pallet = QtWidgets.QSlider(self.centralwidget)
-        self.pallet.setOrientation(QtCore.Qt.Horizontal)
+        self.pallet = QtWidgets.QComboBox(self.centralwidget)
         self.pallet.setObjectName("pallet")
-        self.pallet.setMinimum(0)
-        self.pallet.setMaximum(4)
-        self.pallet.setSliderPosition(0)
 
         self.verticalLayout_4.addWidget(self.pallet)
        

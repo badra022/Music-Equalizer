@@ -37,7 +37,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.cmap = cmaps[0]
-        self.ui.pallet.sliderReleased.connect(self.setSpectrogramColor)
+        for cmap in cmaps:
+            self.ui.pallet.addItem(cmap)
+        self.ui.pallet.activated[str].connect(self.setSpectrogramColor)
         self.inputSignal = False
         self.outputSignal = False
         signal.timer.start()
@@ -125,9 +127,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             report.savefig(self.outputSignal.getSpectrogram(self.cmap))
             report.close()
 
-    def setSpectrogramColor(self):
-        self.outputSignal.setSpectrogramColor(self.ui.hist ,self.ui.pallet.value())
-        self.cmap = cmaps[self.ui.pallet.value()]
+    def setSpectrogramColor(self, text):
+        for idx in range(len(cmaps)):
+            if cmaps[idx] == text:
+                self.outputSignal.setSpectrogramColor(self.ui.hist ,idx)
+        self.cmap = text
 
 # function for launching a QApplication and running the ui and main window
 def window():
