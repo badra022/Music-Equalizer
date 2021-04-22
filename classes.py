@@ -100,7 +100,7 @@ class signal(object):
         hist.gradient.saveState()
 
     def plotSpectrogram(self, imageItem):
-        self.powerSpectrum, self.freqenciesFound, _, _ = my_specgram(self.amplitude[self.startTimeIdx: self.endTimeIdx], Fs=self.fs)
+        self.powerSpectrum, self.freqenciesFound, _, _ = plt.specgram(self.amplitude, Fs=self.fs)
         # for more colormaps: https://matplotlib.org/2.0.2/examples/color/colormaps_reference.html
         # Sxx contains the amplitude for each pixel
         imageItem.setImage(self.powerSpectrum)
@@ -110,7 +110,7 @@ class signal(object):
         min = np.min(self.powerSpectrum)
         max = np.max(self.powerSpectrum)
         hist.setLevels(min + (max - min) * minIntensity, max * maxIntensity)
-        plotItem.setXRange(self.time[self.startTimeIdx], self.time[self.endTimeIdx])
+        # plotItem.setXRange(self.time[self.startTimeIdx], self.time[self.endTimeIdx])
 
     def listen(self):
         winsound.PlaySound("output_sound" + str(self.winNumber) + ".wav", winsound.SND_ASYNC)

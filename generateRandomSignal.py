@@ -2,17 +2,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io.wavfile import write
 
-frequences=[3000,1100,1500,800,2000,2600,1030,2005,1000,5500]
+frequences=[3000,400,1500,800,2000,2600,1030,2005,1000,5500]
 fs=2* max(frequences)
 
 x=np.arange(fs)
 signal=0
-amplitudes=[2000,5550,1000,3360,988,100,7888,6000,1100,8700]
+# amplitudes=[2000,5550,1000,3360,988,100,7888,6000,1100,8700]
 
 j=0
 for i in range(len (frequences)):
     y1=np.sin(2*np.pi*frequences[i]*(x/fs))
-    signal=signal+amplitudes[j]*y1
+    signal=signal+3000*y1
     j=j+1
 
 t = np.linspace(0., 1., fs)
