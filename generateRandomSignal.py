@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.io.wavfile import write
 
 frequences=[100,750,1300,1850,2200,2750,3300,3850,4400,5500]
-fs=2* max(frequences)
+fs=2* max(frequences) + 100
 
 x=np.arange(fs)
 signal=0

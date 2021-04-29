@@ -3,7 +3,6 @@ import pyqtgraph as pg
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.io.wavfile import write
-from spectrogram import my_specgram
 import winsound
 import math
 
@@ -38,7 +37,7 @@ class signal(object):
         self.plot()
         self.save()
         self.listen()
-        
+
     def plot(self):
         self.maxAmplitude = self.amplitude.max()
         self.minAmplitude = self.amplitude.min()
@@ -69,19 +68,19 @@ class signal(object):
         if self.zoomFactor < 2.0:
             self.zoomFactor = self.zoomFactor + 0.1
             self.adjustGraph()
-            
+
     def adjustGraph(self):
         self.endTimeIdx = int(self.startTimeIdx + int(self.fs * self.zoomFactor - 1))
         self.widget.setXRange(self.time[self.startTimeIdx], self.time[self.endTimeIdx])
         self.widget.setYRange(self.minAmplitude * self.zoomFactor , self.maxAmplitude * self.zoomFactor)
-        
+
     def getFigure(self):
         fig = plt.figure(figsize=(10, 5))
         plt.plot(self.time[self.startTimeIdx:self.endTimeIdx],self.amplitude[self.startTimeIdx:self.endTimeIdx])
         plt.xlabel('time (sec)')
         plt.ylabel('amplitude (mv)')
         return fig
-    
+
     def getSpectrogram(self, cmap):
         fig = plt.figure(figsize=(10, 5))
         plt.specgram(self.amplitude,  Fs=self.fs, cmap = cmap)
@@ -94,7 +93,7 @@ class signal(object):
         # Scale the X and Y Axis to time and frequency (standard is pixels)
         imageItem.scale(self.time[-1]/np.size(self.powerSpectrum, axis=1), math.pi/np.size(self.powerSpectrum, axis=0))
         self.setSpectrogramColor(hist, 0)
-    
+
     def setSpectrogramColor(self, hist, slidervalue): # slidervalue -> 0: 4
         hist.gradient.restoreState({'mode': 'rgb','ticks': [(0.5, midColor[slidervalue]),(1.0, maxColor[slidervalue]),(0.0, minColor[slidervalue])]})
         hist.gradient.saveState()
@@ -104,7 +103,7 @@ class signal(object):
         # for more colormaps: https://matplotlib.org/2.0.2/examples/color/colormaps_reference.html
         # Sxx contains the amplitude for each pixel
         imageItem.setImage(self.powerSpectrum)
-    
+
     def moveSpectrogram(self, minIntensity, maxIntensity, plotItem, hist):
         # Fit the min and max levels of the histogram to the data available
         min = np.min(self.powerSpectrum)
